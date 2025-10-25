@@ -1,9 +1,3 @@
----
-layout: post
-title: "Bandit-Guided Submodular Curriculum for Adaptive Subset Selection"
-author: "Atharv Kshirsagar et al."
-categories: [Research, Curriculum Learning, Subset Selection]
----
 
 ### 🧩 Problem Statement
 
@@ -24,7 +18,7 @@ At every training step, ONLINESUBMOD views each **submodular function** (e.g., d
 - **Computationally Efficient:** Submodular maximization adds <1 ms overhead compared to gradient computation.
 
 <p align="center">
-<img src="https://github.com/efficiency-learning/banditsubmod/raw/main/assets/overview.png" width="80%">
+<img src="/images/ss1.png" width="80%">
 <br><em>Figure: Bandit-guided selection of submodular functions over training.</em>
 </p>
 
@@ -55,7 +49,7 @@ ONLINESUBMOD achieves the best accuracy across most domains while maintaining lo
 Even with only 30% of the training data, ONLINESUBMOD matches or exceeds full-data accuracy.
 
 <p align="center">
-<img src="https://github.com/efficiency-learning/banditsubmod/raw/main/assets/results.png" width="85%">
+<img src="/images/ss2.png" width="85%">
 <br><em>Figure: ONLINESUBMOD achieves top-1 accuracy and near-optimal speedup across datasets.</em>
 </p>
 
