@@ -48,6 +48,7 @@ S_t = \arg\max_{S \subseteq D_t,\; |S| \le b} f(S; \theta_t),
 $$
 
 where the overall utility $f(S; \theta_t)$ is defined as a **weighted combination** of multiple submodular criteria:
+
 $$
 f(S; \theta_t)
   = \lambda_1 f_{\text{rep}}(S)
