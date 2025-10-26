@@ -49,12 +49,15 @@ $$
 
 where the overall utility $f(S; \theta_t)$ is defined as a **weighted combination** of multiple submodular criteria:
 
+
 $$
 f(S; \theta_t)
-  = \lambda_1 f_{\text{rep}}(S)
-  + \lambda_2 f_{\text{div}}(S)
-  + \lambda_3 f_{\text{inf}}(S).
+= \lambda_1 f_{\text{rep}}(S)
++ \lambda_2 f_{\text{div}}(S)
++ \lambda_3 f_{\text{inf}}(S).
 $$
+
+
 
 Here:
 
