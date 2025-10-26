@@ -52,7 +52,7 @@ is observed.
 
 ---
 
-#### Bandit Objective
+#### 🧠 Bandit Objective
 
 The bandit aims to maximize the cumulative expected validation reward:
 
@@ -71,7 +71,7 @@ linking **subset quality** directly to validation improvement.
 
 ---
 
-#### Submodular Maximization Step
+#### 🧮 Submodular Maximization Step
 
 For each selected arm $k$, ONLINESUBMOD solves a **budget-constrained submodular maximization**:
 
@@ -89,7 +89,7 @@ A greedy selection provides a $(1 - 1/e)$-approximation to the optimal subset.
 
 ---
 
-#### No-Regret Guarantee
+#### ⚖️ No-Regret Guarantee
 
 The policy uses an **EXP3-based no-regret bandit update** to adaptively weigh the arms:
 
@@ -114,7 +114,7 @@ ensuring convergence to the best fixed submodular function in hindsight.
 
 ---
 
-#### Summary of Key Ideas
+#### 🧩 Summary of Key Ideas
 
 - **Bandit Formulation:** Each submodular function acts as an arm; arm rewards come from validation improvement.  
 - **No-Regret Policy:** Online EXP3 updates ensure the learner focuses on consistently beneficial submodular functions.  
@@ -180,7 +180,7 @@ ensuring the learner asymptotically approaches the best submodular policy.
 
 ---
 
-### Summary
+### 🚀 Summary
 
 ONLINESUBMOD bridges *curriculum learning* and *adaptive data selection* under a unified theoretical framework.  
 It efficiently learns *what to learn next* — offering a robust, scalable path for efficient model training, especially in large-scale **vision and language** settings.
