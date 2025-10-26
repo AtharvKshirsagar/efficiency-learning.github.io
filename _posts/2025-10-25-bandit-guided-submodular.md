@@ -108,7 +108,7 @@ This reward is directly used to update the *bandit policy*, encouraging selectio
 
 ---
 
-#### 🧠 Bandit Objective
+#### 🧠 Bandit Objectiveaa
 
 The utility functions $\{ f_1, f_2, \dots, f_K \}$ act as **arms** in a multi-armed bandit (MAB) framework.  
 At each iteration $t$, one function $f_{a_t}$ is chosen to construct $S_t$.  
