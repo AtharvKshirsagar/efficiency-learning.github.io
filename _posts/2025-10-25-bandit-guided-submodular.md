@@ -30,131 +30,108 @@ $$
 where $f(\cdot)$ is a **submodular function** encoding representativeness and diversity.
 
 ---
-###  Methodology in a Nutshell: ONLINESUBMOD
 
-We propose **ONLINESUBMOD**, a *bandit-guided submodular curriculum* framework for adaptive data selection.  
-The key idea is to dynamically choose *which submodular utility function* to optimize at each step — guided by validation feedback — rather than following a fixed or hand-crafted curriculum.
+## Our Solution: ONLINESUBMOD
 
-At a high level, ONLINESUBMOD maintains a pool of candidate **submodular utility functions**
+### Framing Selection as a Multi-Armed Bandit
+
+We maintain a pool of candidate submodular utility functions:
 
 $$
 \{f_1, f_2, \dots, f_K\},
 $$
 
-where each $f_k$ models a different prior such as **diversity**, **representativeness**, or **uncertainty**.  
-At each iteration, the algorithm picks one function $f_{a_t}$ to construct the next training subset.
+where each function $f_k$ models a different prior — **diversity**, **representativeness**, or **uncertainty**. At each iteration $t$, selecting a function is treated as pulling an arm in a multi-armed bandit:
+
+- Each arm corresponds to a submodular function.
+- The reward is the validation performance improvement after training on the selected subset.
 
 ---
 
-####  Utility-Based Subset Selection
+### Step 1: Utility-Based Subset Selection
 
-Given a dataset at step $t$, $D_t$, the model selects a subset $S_t$ of size at most $b$ that maximizes a chosen submodular utility function:
-
-$$
-S_t = \arg\max_{S \subseteq D_t,\; |S| \le b} f_{a_t}(S),
-$$
-
-where $f_{a_t}(S)$ quantifies the “value” of subset $S$ in terms of coverage, representativeness, or information gain.  
-This general formulation allows ONLINESUBMOD to encompass many existing curricula (e.g., loss-based, uncertainty-based, diversity-based) as special cases.
-
-Once the subset $S_t$ is chosen, the model trains on it and evaluates the **validation improvement**:
+Given the dataset $D_t$ at step $t$, we select a subset $S_t$ of size at most $b$ by maximizing the chosen submodular function:
 
 $$
-r_t = \Delta \ell_{\text{val}}
-    = \ell_{\text{val}}(\theta_{t-1})
-    - \ell_{\text{val}}(\theta_t),
+S_t = \arg\max_{S \subseteq D_t, |S| \le b} f_{a_t}(S),
 $$
 
-where $\ell_{\text{val}}(\theta)$ denotes the validation loss after parameters $\theta$.
-
-This validation gain $r_t$ serves as a *reward signal* to guide the next selection.
-
----
-
-####  Bandit Objective
-
-Each submodular utility function acts as an **arm** in a multi-armed bandit (MAB) framework.  
-At each round $t$, ONLINESUBMOD must decide **which arm (utility function)** to pull.
-
-The objective is to maximize the cumulative expected validation reward:
+where $f_{a_t}$ is the selected utility function.  
+The **submodular property** ensures efficient greedy approximation:
 
 $$
-\max_{\pi} \; \mathbb{E}\!\left[ \sum_{t=1}^{T} r_t \right],
+f_k(A \cup \{x\}) - f_k(A) \ge f_k(B \cup \{x\}) - f_k(B), \quad A \subseteq B,
 $$
 
-where $\pi$ is the *arm-selection policy*.  
-Each arm corresponds to a utility $f_k$, and its expected reward is modeled as
-
-$$
-\mathbb{E}[r_t \mid a_t = k] = g(f_k),
-$$
-
-which links the *quality of the chosen subset* directly to the *observed validation improvement*.
-
----
-
-####  Submodular Maximization Step
-
-For a chosen function $f_k$, the framework solves a **budget-constrained submodular maximization** problem:
-
-$$
-S_t = \arg\max_{S \subseteq D_t,\; |S| \le b} f_k(S),
-$$
-
-subject to the **diminishing-returns property** of submodularity:
-
-$$
-f_k(A \cup \{x\}) - f_k(A)
-  \ge
-  f_k(B \cup \{x\}) - f_k(B),
-  \quad A \subseteq B.
-$$
-
-This property ensures that greedy selection yields a provable approximation to the optimal subset.  
-Specifically, the greedy algorithm achieves a $(1 - 1/e)$-approximation:
+and guarantees a $(1 - 1/e)$-approximation:
 
 $$
 f_k(S_{\text{greedy}}) \ge (1 - 1/e) f_k(S^*).
 $$
 
-This provides theoretical efficiency guarantees while remaining computationally lightweight (less than 1 ms overhead compared to a gradient step).
+---
+
+### Step 2: Validation-Driven Reward
+
+After training on subset $S_t$, we measure the validation improvement:
+
+$$
+r_t = \Delta \ell_{\text{val}} = \ell_{\text{val}}(\theta_{t-1}) - \ell_{\text{val}}(\theta_t),
+$$
+
+which serves as our reward signal, linking subset quality to generalization performance.
 
 ---
 
-####  No-Regret Guarantee via EXP3
+### Step 3: Bandit Objective
 
-The arm-selection policy uses the **EXP3 (Exponential Weights for Exploration and Exploitation)** algorithm to adaptively update arm probabilities based on observed rewards.
-
-Weights are updated as:
+Our goal is to maximize cumulative expected validation reward:
 
 $$
-w_{k,t+1} = w_{k,t} \exp\!\big(\eta\,\hat{r}_{k,t}\big),
+\max_\pi \; \mathbb{E} \left[ \sum_{t=1}^T r_t \right],
 $$
 
-where  
+where $\pi$ is our arm-selection policy. The expected reward for arm $k$ is modeled as:
 
 $$
-\hat{r}_{k,t}
-  = \frac{r_t\,\mathbb{I}[a_t = k]}{p_{k,t}},
-  \qquad
-  p_{k,t}
-  = \frac{w_{k,t}}{\sum_j w_{j,t}}.
+\mathbb{E}[r_t \mid a_t = k] = g(f_k).
 $$
-
-Here:
-- $p_{k,t}$ is the probability of selecting arm $k$ at time $t$,  
-- $\eta$ is the learning rate, and  
-- $\mathbb{I}[a_t = k]$ is the indicator for the chosen arm.
-
-The algorithm satisfies a **no-regret guarantee**:
-
-$$
-\text{Regret}(T)
-  = \mathcal{O}\!\big(\sqrt{T\,K\,\log K}\big),
-$$
-
-ensuring convergence toward the best fixed submodular function in hindsight.  
-This means ONLINESUBMOD adaptively learns *which notion of utility* is most effective for improving validation performance during training.
 
 ---
 
+### The Mathematics Behind the Utility Function
+
+**Gradient-Based Utility Approximation:**
+
+For a training batch $B_t$ and validation instance $z_{\text{val}}$:
+
+$$
+U_t(B_t, z_{\text{val}}) = \ell(z_{\text{val}}, \theta_t) - \ell(z_{\text{val}}, \tilde{\theta}_{t+1}(B_t)),
+$$
+
+where
+
+$$
+\tilde{\theta}_{t+1}(B_t) = \theta_t - \eta_t \nabla_\theta \left[ \frac{1}{|B_t|} \sum_{z \in B_t} \ell(z, \theta_t) \right].
+$$
+
+**First-Order Approximation:**
+
+Marginal utility gain of adding instance $z_i$:
+
+$$
+\Delta U_t(z_i \mid B_t^{(<i)}, z_{\text{val}}) \approx \eta_t \nabla_\theta \ell(z_i, \theta_t) \cdot \nabla_\theta \ell(z_{\text{val}}, \theta_{t+1}(B_t^{(<i)})).
+$$
+
+**Second-Order Refinement:**
+
+Using a Taylor expansion:
+
+$$
+\Delta U_t \approx 
+\underbrace{\eta_t g_{\theta_t}(z_i) \cdot g_{\theta_t}(z_{\text{val}})}_{\text{Gradient Influence (Term I)}} 
+- 
+\underbrace{\eta_t^2 g_{\theta_t}(z_i)^\top H_{z_{\text{val}}}(\theta_t) \left(\frac{1}{|B_t^{(<i)}|} \sum_{z \in B_t^{(<i)}} g_{\theta_t}(z)\right)}_{\text{Hessian-Weighted Similarity (Term II)}}.
+$$
+
+---
