@@ -5,13 +5,19 @@ math: true
 categories: [Research, Curriculum Learning, Subset Selection]
 ---
 
-### 🧩 Problem Statement
+### Problem Statement
 
-Traditional **curriculum learning** assumes a fixed notion of “easy-to-hard” sample progression, yet defining *difficulty* is often arbitrary and domain-dependent.  
-Meanwhile, **adaptive subset selection** methods—though powerful—can be computationally heavy.
+Traditional curriculum learning proceeds from easy to hard samples, yet defining
+a reliable notion of difficulty remains elusive. Prior work has used submodular
+functions to induce difficulty scores in curriculum learning. We reinterpret adaptive
+subset selection and formulate it as a multi-armed bandit problem, where each
+arm corresponds to a submodular function guiding sample selection. We introduce
+ONLINESUBMOD, a novel online greedy policy that optimizes a utility-driven re-
+ward and provably achieves no-regret performance under various sampling regimes.
+Empirically, ONLINESUBMOD outperforms both traditional curriculum learning
+and bi-level optimization approaches across vision and language datasets, show-
+ing superior accuracy-efficiency tradeoffs
 
-We ask:  
-> Can we design a *principled*, *efficient*, and *adaptive* curriculum that learns which samples to train on—guided directly by validation performance?
 
 Formally, given a dataset $D = \{(x_i, y_i)\}_{i=1}^N$, the goal is to select a subset  
 $S_t \subseteq D$ at training step $t$ that maximizes the validation utility $U(S_t)$ while maintaining efficiency.  
@@ -25,7 +31,7 @@ where $f(\cdot)$ is a **submodular function** encoding representativeness and di
 
 ---
 
-### ⚙️ Methodology in a Nutshell: ONLINESUBMOD
+### ONLINESUBMOD
 
 We propose **ONLINESUBMOD**, a *bandit-guided submodular curriculum* framework.  
 At each iteration, ONLINESUBMOD treats a pool of submodular functions
@@ -46,7 +52,7 @@ is observed.
 
 ---
 
-#### 🧠 Bandit Objective
+#### Bandit Objective
 
 The bandit aims to maximize the cumulative expected validation reward:
 
@@ -65,7 +71,7 @@ linking **subset quality** directly to validation improvement.
 
 ---
 
-#### 🧮 Submodular Maximization Step
+#### Submodular Maximization Step
 
 For each selected arm $k$, ONLINESUBMOD solves a **budget-constrained submodular maximization**:
 
@@ -83,7 +89,7 @@ A greedy selection provides a $(1 - 1/e)$-approximation to the optimal subset.
 
 ---
 
-#### ⚖️ No-Regret Guarantee
+#### No-Regret Guarantee
 
 The policy uses an **EXP3-based no-regret bandit update** to adaptively weigh the arms:
 
@@ -108,7 +114,7 @@ ensuring convergence to the best fixed submodular function in hindsight.
 
 ---
 
-#### 🧩 Summary of Key Ideas
+#### Summary of Key Ideas
 
 - **Bandit Formulation:** Each submodular function acts as an arm; arm rewards come from validation improvement.  
 - **No-Regret Policy:** Online EXP3 updates ensure the learner focuses on consistently beneficial submodular functions.  
@@ -174,7 +180,7 @@ ensuring the learner asymptotically approaches the best submodular policy.
 
 ---
 
-### 🚀 Summary
+### Summary
 
 ONLINESUBMOD bridges *curriculum learning* and *adaptive data selection* under a unified theoretical framework.  
 It efficiently learns *what to learn next* — offering a robust, scalable path for efficient model training, especially in large-scale **vision and language** settings.
