@@ -1,3 +1,11 @@
+---
+layout: post
+title: "Bandit-Guided Submodular Curriculum for Adaptive Subset Selection"
+author: "Prateek Chanda et al."
+math: true
+categories: [Research, Curriculum Learning, Subset Selection]
+---
+
 ### 🧩 Problem Statement
 
 Traditional **curriculum learning** assumes a fixed notion of “easy-to-hard” sample progression, yet defining *difficulty* is often arbitrary and domain-dependent.  
@@ -6,14 +14,14 @@ Meanwhile, **adaptive subset selection** methods—though powerful—can be comp
 We ask:  
 > Can we design a *principled*, *efficient*, and *adaptive* curriculum that learns which samples to train on—guided directly by validation performance?
 
-Formally, given a dataset \( D = \{(x_i, y_i)\}_{i=1}^N \), the goal is to select a subset  
-\( S_t \subseteq D \) at training step \( t \) that maximizes the validation utility \( U(S_t) \) while maintaining efficiency.  
+Formally, given a dataset $D = \{(x_i, y_i)\}_{i=1}^N$, the goal is to select a subset  
+$S_t \subseteq D$ at training step $t$ that maximizes the validation utility $U(S_t)$ while maintaining efficiency.  
 Curriculum learning can be posed as the optimization:
 
-\[
+$$
 \max_{S_t \subseteq D} \; f(S_t) = \mathbb{E}_{(x,y)\sim S_t} [ \ell(x, y; \theta_t) ],
-\]
-where \( f(\cdot) \) is a **submodular function** encoding representativeness and diversity.
+$$
+where $f(\cdot)$ is a **submodular function** encoding representativeness and diversity.
 
 ---
 
@@ -21,15 +29,15 @@ where \( f(\cdot) \) is a **submodular function** encoding representativeness an
 
 We propose **ONLINESUBMOD**, a *bandit-guided submodular curriculum* framework.  
 At each iteration, ONLINESUBMOD treats a pool of submodular functions
-\( \{ f_1, f_2, \dots, f_K \} \)
+$\{ f_1, f_2, \dots, f_K \}$
 as *arms* in a **multi-armed bandit (MAB)** setup.  
-Each \( f_k \) captures a different data-selection prior — e.g., **diversity**, **representativeness**, or **uncertainty**.
+Each $f_k$ captures a different data-selection prior — e.g., **diversity**, **representativeness**, or **uncertainty**.
 
-At step \( t \):
-1. A submodular function \( f_{a_t} \) is selected.
-2. A subset \( S_t = \arg\max_{S \subseteq D_t, |S| \leq b} f_{a_t}(S) \) is chosen.
-3. The model is trained on \( S_t \), and a **validation reward**
-   \( r_t = \Delta \ell_{\text{val}} = \ell_{\text{val}}(\theta_{t-1}) - \ell_{\text{val}}(\theta_t) \)
+At step $t$:
+1. A submodular function $f_{a_t}$ is selected.
+2. A subset $S_t = \arg\max_{S \subseteq D_t, |S| \leq b} f_{a_t}(S)$ is chosen.
+3. The model is trained on $S_t$, and a **validation reward**
+   $r_t = \Delta \ell_{\text{val}} = \ell_{\text{val}}(\theta_{t-1}) - \ell_{\text{val}}(\theta_t)$
    is observed.
 
 ---
@@ -38,33 +46,33 @@ At step \( t \):
 
 The bandit aims to maximize the cumulative expected validation reward:
 
-\[
+$$
 \max_{\pi} \; \mathbb{E} \left[ \sum_{t=1}^{T} r_t \right],
-\]
-where \( \pi \) is the arm-selection policy.  
-Each arm corresponds to a submodular function \( f_k \), and the expected reward is:
+$$
+where $\pi$ is the arm-selection policy.  
+Each arm corresponds to a submodular function $f_k$, and the expected reward is:
 
-\[
+$$
 \mathbb{E}[r_t | a_t = k] = g(f_k),
-\]
+$$
 linking **subset quality** directly to validation improvement.
 
 ---
 
 #### 🧮 Submodular Maximization Step
 
-For each selected arm \( k \), ONLINESUBMOD solves a **budget-constrained submodular maximization**:
+For each selected arm $k$, ONLINESUBMOD solves a **budget-constrained submodular maximization**:
 
-\[
+$$
 S_t = \arg\max_{S \subseteq D_t, |S| \leq b} f_k(S),
-\]
-where \( f_k(S) \) satisfies diminishing returns:
+$$
+where $f_k(S)$ satisfies diminishing returns:
 
-\[
+$$
 f_k(A \cup \{x\}) - f_k(A) \ge f_k(B \cup \{x\}) - f_k(B), \quad A \subseteq B.
-\]
+$$
 
-A greedy selection provides a \((1 - 1/e)\)-approximation to the optimal subset.
+A greedy selection provides a $(1 - 1/e)$-approximation to the optimal subset.
 
 ---
 
@@ -72,16 +80,16 @@ A greedy selection provides a \((1 - 1/e)\)-approximation to the optimal subset.
 
 The policy uses an **EXP3-based no-regret bandit update** to adaptively weigh the arms:
 
-\[
+$$
 w_{k,t+1} = w_{k,t} \exp(\eta \hat{r}_{k,t}),
-\]
-where \( \hat{r}_{k,t} = \frac{r_t \mathbb{I}[a_t = k]}{p_{k,t}} \)  
-and \( p_{k,t} = \frac{w_{k,t}}{\sum_j w_{j,t}} \).
+$$
+where $\hat{r}_{k,t} = \frac{r_t \mathbb{I}[a_t = k]}{p_{k,t}}$  
+and $p_{k,t} = \frac{w_{k,t}}{\sum_j w_{j,t}}$.
 
 Theoretical guarantee:
-\[
+$$
 \text{Regret}(T) = \mathcal{O}(\sqrt{T K \log K}),
-\]
+$$
 ensuring convergence to the best fixed submodular function in hindsight.
 
 ---
@@ -139,9 +147,10 @@ Even with only 30% of the training data, ONLINESUBMOD matches or exceeds full-da
 - **No-regret updates** theoretically guarantee long-term optimality.
 
 Formally, the expected cumulative reward satisfies:
-\[
+
+$$
 \sum_{t=1}^{T} r_t \ge \sum_{t=1}^{T} r_t^* - \mathcal{O}(\sqrt{T K \log K}),
-\]
+$$
 ensuring the learner asymptotically approaches the best submodular policy.
 
 ---
