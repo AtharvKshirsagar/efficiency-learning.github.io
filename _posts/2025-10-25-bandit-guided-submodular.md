@@ -51,11 +51,11 @@ where the overall utility $f(S; \theta_t)$ is defined as a **weighted combinatio
 
 
 $$
-f(S; \theta_t)
-= \lambda_1 f_{\text{rep}}(S)
-+ \lambda_2 f_{\text{div}}(S)
-+ \lambda_3 f_{\text{inf}}(S).
-$$
+f(S; \theta_t)$$ is sum of 
+ $$\lambda_1 f_{\text{rep}}(S)$$ , 
+ $$\lambda_2 f_{\text{div}}(S)$$ , 
+ $$\lambda_3 f_{\text{inf}}(S).$$ 
+
 
 
 
