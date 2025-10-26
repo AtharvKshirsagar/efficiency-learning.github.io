@@ -1,7 +1,6 @@
 ---
 layout: post
 title: "Bandit-Guided Submodular Curriculum for Adaptive Subset Selection"
-author: "Atharv Kshirsagar et al."
 math: true
 categories: [Research, Curriculum Learning, Subset Selection]
 ---
