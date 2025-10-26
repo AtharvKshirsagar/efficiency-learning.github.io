@@ -193,7 +193,7 @@ Thus, over time, ONLINESUBMOD converges to the most beneficial utility definitio
 *ONLINESUBMOD yields ~3% absolute gain on average, with faster convergence.*
 
 <p align="center">
-  <img src="/assets/images/ss1.png" width="80%">
+  <img src="ss1.png" width="80%">
   <br>
   <em>Figure 1: Bandit-guided selection of submodular functions during training.</em>
 </p>
@@ -212,7 +212,7 @@ Thus, over time, ONLINESUBMOD converges to the most beneficial utility definitio
 Even with only 30% of the training data, ONLINESUBMOD matches or exceeds full-data accuracy.
 
 <p align="center">
-  <img src="/assets/images/ss2.png" width="85%">
+  <img src="ss2.png" width="85%">
   <br>
   <em>Figure 2: ONLINESUBMOD achieves top-1 accuracy and near-optimal speedup across datasets.</em>
 </p>
