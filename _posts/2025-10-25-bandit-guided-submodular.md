@@ -30,108 +30,164 @@ $$
 where $f(\cdot)$ is a **submodular function** encoding representativeness and diversity.
 
 ---
+### ⚙️ Methodology in a Nutshell: ONLINESUBMOD
 
-## Our Solution: ONLINESUBMOD
-
-### Framing Selection as a Multi-Armed Bandit
-
-We maintain a pool of candidate submodular utility functions:
-
-$$
-\{f_1, f_2, \dots, f_K\},
-$$
-
-where each function $f_k$ models a different prior — **diversity**, **representativeness**, or **uncertainty**. At each iteration $t$, selecting a function is treated as pulling an arm in a multi-armed bandit:
-
-- Each arm corresponds to a submodular function.
-- The reward is the validation performance improvement after training on the selected subset.
+We propose **ONLINESUBMOD**, a *bandit-guided submodular curriculum* framework that adaptively selects data subsets based on validation-driven utility feedback.  
+Unlike standard curricula with fixed difficulty schedules, ONLINESUBMOD *learns what to learn next* using submodular optimization and online bandit updates.
 
 ---
 
-### Step 1: Utility-Based Subset Selection
+#### 🎯 Utility-Based Subset Selection
 
-Given the dataset $D_t$ at step $t$, we select a subset $S_t$ of size at most $b$ by maximizing the chosen submodular function:
-
-$$
-S_t = \arg\max_{S \subseteq D_t, |S| \le b} f_{a_t}(S),
-$$
-
-where $f_{a_t}$ is the selected utility function.  
-The **submodular property** ensures efficient greedy approximation:
+At each training iteration $t$, the algorithm observes the model parameters $\theta_t$ and the available dataset $D_t$.  
+It selects a subset $S_t \subseteq D_t$ of size at most $b$ that maximizes a composite **utility function**:
 
 $$
-f_k(A \cup \{x\}) - f_k(A) \ge f_k(B \cup \{x\}) - f_k(B), \quad A \subseteq B,
+S_t = \arg\max_{S \subseteq D_t,\; |S| \le b} f(S; \theta_t),
 $$
 
-and guarantees a $(1 - 1/e)$-approximation:
+where the overall utility $f(S; \theta_t)$ is defined as a **weighted combination** of multiple submodular criteria:
 
 $$
-f_k(S_{\text{greedy}}) \ge (1 - 1/e) f_k(S^*).
+f(S; \theta_t)
+  = \lambda_1 f_{\text{rep}}(S)
+  + \lambda_2 f_{\text{div}}(S)
+  + \lambda_3 f_{\text{inf}}(S).
 $$
 
----
+Here:
 
-### Step 2: Validation-Driven Reward
+- $f_{\text{rep}}(S)$ — **Representativeness**, measuring how well the subset covers the data distribution.  
+- $f_{\text{div}}(S)$ — **Diversity**, encouraging varied examples to prevent redundancy.  
+- $f_{\text{inf}}(S)$ — **Informativeness**, prioritizing uncertain or high-loss samples.  
 
-After training on subset $S_t$, we measure the validation improvement:
+The coefficients $\lambda_1, \lambda_2, \lambda_3$ are adaptive weights tuned by **validation feedback**, ensuring the model prioritizes subsets that yield real performance gains.
 
-$$
-r_t = \Delta \ell_{\text{val}} = \ell_{\text{val}}(\theta_{t-1}) - \ell_{\text{val}}(\theta_t),
-$$
-
-which serves as our reward signal, linking subset quality to generalization performance.
-
----
-
-### Step 3: Bandit Objective
-
-Our goal is to maximize cumulative expected validation reward:
+The utility satisfies the **submodular property** (diminishing returns):
 
 $$
-\max_\pi \; \mathbb{E} \left[ \sum_{t=1}^T r_t \right],
+f(A \cup \{x\}) - f(A)
+  \ge f(B \cup \{x\}) - f(B),
+  \quad \text{for all } A \subseteq B.
 $$
 
-where $\pi$ is our arm-selection policy. The expected reward for arm $k$ is modeled as:
+This allows efficient greedy maximization with a $(1 - 1/e)$ guarantee:
 
 $$
-\mathbb{E}[r_t \mid a_t = k] = g(f_k).
+f(S_{\text{greedy}}) \ge (1 - 1/e)\, f(S^*).
 $$
 
 ---
 
-### The Mathematics Behind the Utility Function
+#### 🧩 Validation Utility and Reward Function
 
-**Gradient-Based Utility Approximation:**
-
-For a training batch $B_t$ and validation instance $z_{\text{val}}$:
+After selecting $S_t$ and training on it, ONLINESUBMOD computes a **validation utility** $U_t$ to quantify improvement in model generalization:
 
 $$
-U_t(B_t, z_{\text{val}}) = \ell(z_{\text{val}}, \theta_t) - \ell(z_{\text{val}}, \tilde{\theta}_{t+1}(B_t)),
+U_t = \mathbb{E}_{(x, y) \sim D_{\text{val}}}
+      \big[ -\ell(x, y; \theta_t) \big],
 $$
 
-where
+where $\ell(x, y; \theta_t)$ denotes the loss on the validation set.  
+The **reward signal** $r_t$ is defined as the *improvement* in this validation utility between two consecutive steps:
 
 $$
-\tilde{\theta}_{t+1}(B_t) = \theta_t - \eta_t \nabla_\theta \left[ \frac{1}{|B_t|} \sum_{z \in B_t} \ell(z, \theta_t) \right].
+r_t = \Delta U_t
+    = U_t - U_{t-1}
+    = -\big( \ell_{\text{val}}(\theta_t)
+             - \ell_{\text{val}}(\theta_{t-1}) \big).
 $$
 
-**First-Order Approximation:**
-
-Marginal utility gain of adding instance $z_i$:
+Equivalently, the same reward can be expressed in terms of validation loss reduction:
 
 $$
-\Delta U_t(z_i \mid B_t^{(<i)}, z_{\text{val}}) \approx \eta_t \nabla_\theta \ell(z_i, \theta_t) \cdot \nabla_\theta \ell(z_{\text{val}}, \theta_{t+1}(B_t^{(<i)})).
+r_t = \ell_{\text{val}}(\theta_{t-1}) - \ell_{\text{val}}(\theta_t).
 $$
 
-**Second-Order Refinement:**
-
-Using a Taylor expansion:
-
-$$
-\Delta U_t \approx 
-\underbrace{\eta_t g_{\theta_t}(z_i) \cdot g_{\theta_t}(z_{\text{val}})}_{\text{Gradient Influence (Term I)}} 
-- 
-\underbrace{\eta_t^2 g_{\theta_t}(z_i)^\top H_{z_{\text{val}}}(\theta_t) \left(\frac{1}{|B_t^{(<i)}|} \sum_{z \in B_t^{(<i)}} g_{\theta_t}(z)\right)}_{\text{Hessian-Weighted Similarity (Term II)}}.
-$$
+This reward is directly used to update the *bandit policy*, encouraging selection of utilities that yield the largest validation improvement.
 
 ---
+
+#### 🧠 Bandit Objective
+
+The utility functions $\{ f_1, f_2, \dots, f_K \}$ act as **arms** in a multi-armed bandit (MAB) framework.  
+At each iteration $t$, one function $f_{a_t}$ is chosen to construct $S_t$.  
+The bandit aims to maximize the cumulative expected reward:
+
+$$
+\max_{\pi} \;
+\mathbb{E}\!\left[
+  \sum_{t=1}^{T} r_t
+\right],
+$$
+
+where $\pi$ is the arm-selection policy and $r_t$ is the observed validation gain.  
+The expected reward for arm $k$ is:
+
+$$
+\mathbb{E}[r_t \mid a_t = k] = g(f_k),
+$$
+
+which links each submodular function’s subset quality to validation improvement.
+
+---
+
+#### 🧮 Submodular Maximization Step
+
+For a selected arm $k$, ONLINESUBMOD solves:
+
+$$
+S_t = \arg\max_{S \subseteq D_t,\; |S| \le b} f_k(S),
+$$
+
+where $f_k(\cdot)$ satisfies submodularity and is efficiently optimized via a greedy algorithm.  
+The result is a near-optimal subset used for model updates and reward computation.
+
+---
+
+#### ⚖️ No-Regret Bandit Update via EXP3
+
+The policy weights are updated online using the **EXP3** algorithm (Exponential Weights for Exploration and Exploitation).  
+Let $w_{k,t}$ denote the weight for arm $k$ at time $t$, and $p_{k,t}$ its sampling probability:
+
+$$
+p_{k,t} = \frac{w_{k,t}}{\sum_j w_{j,t}}.
+$$
+
+After observing the reward $r_t$, the weight update rule is:
+
+$$
+w_{k,t+1}
+  = w_{k,t}
+    \exp\!\big(\eta\, \hat{r}_{k,t}\big),
+$$
+
+where  
+
+$$
+\hat{r}_{k,t}
+  = \frac{r_t \, \mathbb{I}[a_t = k]}{p_{k,t}}.
+$$
+
+Here, $\eta$ is the learning rate, and $\mathbb{I}[a_t = k]$ is an indicator for the selected arm.  
+This update balances **exploration** (trying diverse submodular functions) and **exploitation** (favoring those that yield higher validation reward).
+
+Theoretical analysis guarantees **no regret** compared to the best fixed submodular function:
+
+$$
+\text{Regret}(T)
+  = \mathcal{O}\!\big(\sqrt{T K \log K}\big).
+$$
+
+Thus, over time, ONLINESUBMOD converges to the most beneficial utility definition for the task, ensuring efficient and adaptive data selection.
+
+---
+
+#### 🧩 Summary of Core Mechanisms
+
+- **Utility Function:** Combines representativeness, diversity, and informativeness with adaptive validation-driven weighting.  
+- **Validation Reward:** Computed as stepwise improvement in validation performance.  
+- **Bandit Formulation:** Learns which utility yields highest expected gain via EXP3 updates.  
+- **No-Regret Policy:** Ensures convergence to optimal submodular criterion with bounded regret.  
+- **Efficiency:** Submodular maximization adds negligible computational cost (<1 ms overhead).
+
