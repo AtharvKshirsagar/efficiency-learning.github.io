@@ -30,7 +30,7 @@ $$
 where $f(\cdot)$ is a **submodular function** encoding representativeness and diversity.
 
 ---
-### ⚙️ Methodology in a Nutshell: ONLINESUBMOD
+###  Methodology in a Nutshell: ONLINESUBMOD
 
 We propose **ONLINESUBMOD**, a *bandit-guided submodular curriculum* framework for adaptive data selection.  
 The key idea is to dynamically choose *which submodular utility function* to optimize at each step — guided by validation feedback — rather than following a fixed or hand-crafted curriculum.
@@ -46,7 +46,7 @@ At each iteration, the algorithm picks one function $f_{a_t}$ to construct the n
 
 ---
 
-#### 🎯 Utility-Based Subset Selection
+####  Utility-Based Subset Selection
 
 Given a dataset at step $t$, $D_t$, the model selects a subset $S_t$ of size at most $b$ that maximizes a chosen submodular utility function:
 
@@ -71,7 +71,7 @@ This validation gain $r_t$ serves as a *reward signal* to guide the next selecti
 
 ---
 
-#### 🧠 Bandit Objective
+####  Bandit Objective
 
 Each submodular utility function acts as an **arm** in a multi-armed bandit (MAB) framework.  
 At each round $t$, ONLINESUBMOD must decide **which arm (utility function)** to pull.
@@ -93,7 +93,7 @@ which links the *quality of the chosen subset* directly to the *observed validat
 
 ---
 
-#### 🧮 Submodular Maximization Step
+####  Submodular Maximization Step
 
 For a chosen function $f_k$, the framework solves a **budget-constrained submodular maximization** problem:
 
@@ -121,7 +121,7 @@ This provides theoretical efficiency guarantees while remaining computationally 
 
 ---
 
-#### ⚖️ No-Regret Guarantee via EXP3
+####  No-Regret Guarantee via EXP3
 
 The arm-selection policy uses the **EXP3 (Exponential Weights for Exploration and Exploitation)** algorithm to adaptively update arm probabilities based on observed rewards.
 
@@ -158,10 +158,3 @@ This means ONLINESUBMOD adaptively learns *which notion of utility* is most effe
 
 ---
 
-#### 🧩 Summary of Core Ideas
-
-- **Bandit Formulation:** Treat each submodular utility as a competing “expert” and learn which one helps most.  
-- **Utility-Driven Selection:** Subsets are explicitly chosen to maximize a validation-based utility function.  
-- **No-Regret Policy:** EXP3 guarantees long-term performance close to the best static utility.  
-- **Efficiency:** Submodular maximization adds negligible computational cost while improving generalization.
----
